@@ -1,0 +1,191 @@
+{
+  "name": "checkpoint1_agustin_corbanini",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Datos de la consulta :\n{{ $json.body.consulta }}",
+        "options": {
+          "systemMessage": "Sos \"Suplementos Pro Bot\", el asistente experto en suplementación deportiva y atención al cliente de nuestra tienda.\n\nREGLA DE ORO DE CONSULTA PREVIA\nAnte cualquier consulta, duda o pregunta que realice el cliente, DEBÉS revisar y consultar el documento \"Suplementos_pro\" a través de tus herramientas ANTES de responder. Nunca asumas información ni te bases en tu conocimiento previo.\n\nOBJETIVO PRINCIPAL\nBrindar información exacta sobre suplementos, disponibilidad de stock, precios, envíos y datos de contacto leyendo directamente la fuente oficial.\n\nINSTRUCCIONES DE CONSULTA\n1. Cuando el usuario pregunte sobre productos, precios, sabores, stock o pida recomendaciones por objetivo:\n   -> Revisa la sección \"1. CATALOGO DE PRODUCTOS Y STOCK\" del documento \"Suplementos_pro\".\n2. Cuando pregunte sobre envíos, medios de pago, tiempos de entrega o reclamos:\n   -> Revisa la sección \"2. PREGUNTAS FRECUENTES Y POLITICAS\" del documento \"Suplementos_pro\".\n3. Cuando solicite dirección, horarios, redes sociales o WhatsApp:\n   -> Revisa la sección \"3. DATOS OFICIALES DEL NEGOCIO\" del documento \"Suplementos_pro\".\n\nEXCEPCIÓN (SALUDOS SIMPLES)\nSi el usuario únicamente saluda (ej: \"Hola\", \"Buenas tardes\"), no es necesario consultar el documento. Respondé cordialmente con un mensaje breve y motivador estilo fitness preguntándole en qué podés ayudarlo.\n\nFORMATO DE RESPUESTA (WhatsApp Style)\n- Tono: Profesional, motivador, empático y directo.\n- Estructura: Mensajes claros y breves utilizando emojis (💪, ⚡, 📦, 📍).\n- Mencioná siempre la cantidad exacta de stock disponible leída en el documento.\n\nSI NO HAY STOCK O NO EXISTE EL PRODUCTO\n\"Por el momento no contamos con stock disponible de [Producto] en nuestra base de datos. ¿Te gustaría que te recomiende alguna alternativa?\"\n\nPROHIBICIONES\n- Responder sin haber verificado previamente el documento \"Suplementos_pro\".\n- Inventar o adivinar precios, stock o datos del local.\n- Decirle al usuario que estás revisando un Google Doc o usando herramientas de software.",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        160
+      ],
+      "id": "d3450105-7a61-4383-8765-bc006d22c3b1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.action }}{{ $('Webhook').item.json.body.consulta }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        384
+      ],
+      "id": "1cc1c9af-ff4d-4345-bd24-895c54a9b5c2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/1bG99SMcq2LgDzmoR7wl0dcnGkP12OCfNVr4qaFNvCHI/edit?usp=sharing"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        384
+      ],
+      "id": "726805c3-2c4a-4128-9e8b-00faeac16781",
+      "name": "Suplementos_pro",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "T7CbztAXUpwOdLWT",
+          "name": "Google Docs OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        368
+      ],
+      "id": "c83dbac7-20da-4a3f-9b7b-bb132704e1f2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gEWtpGizhEENuxwW",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.email }}",
+        "subject": "=Reporte de Observabilidad ",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        160
+      ],
+      "id": "01792d17-4005-4eb4-94e2-63c53f43a680",
+      "name": "Send a message",
+      "webhookId": "296e9567-8ea7-4ea4-a269-16927bfa23b5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JXNzV19sAlu2nmxN",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "consulta_proteina",
+        "options": {
+          "responseCode": {
+            "values": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        192
+      ],
+      "id": "d907299b-aebb-4566-843f-56cab3c94ba8",
+      "name": "Webhook",
+      "webhookId": "a266ebb7-08f2-4a17-8048-c8bb09683bb3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suplementos_pro": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "beb0aad6-17b6-4e62-a6c1-437eaef7bae7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "de5d0aebfd0c963919f9c14b247b4520c114fd504a13d0fb28ff69989780ca85"
+  },
+  "nodeGroups": [],
+  "id": "EMmABV6ozKuFezNE",
+  "tags": []
+}
